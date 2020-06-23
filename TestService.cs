@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Logging;
 
 namespace Konzolovka
@@ -14,8 +15,8 @@ namespace Konzolovka
         public string Test()
         {
             logger.LogInformation("Method " + nameof(Test) + " execution");
-            
-            return "Hello from " + nameof(TestService);
+
+            return DateTime.Now.ToString();
         }
     }
 }

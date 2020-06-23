@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Konzolovka.Options;
@@ -12,9 +13,10 @@ namespace Konzolovka
     {
         public static async Task Main(string[] args)
         {
-            using var host = Host.CreateDefaultBuilder()
+            var host = Host
+                .CreateDefaultBuilder()
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory())
-                .ConfigureHostConfiguration(configBuilder =>
+                .ConfigureAppConfiguration(configBuilder =>
                 {
                     configBuilder.AddJsonFile("appsettings.json", false, true);
                 })
@@ -22,17 +24,24 @@ namespace Konzolovka
                 {
                     
                 })
+                .ConfigureServices((hostBuilderContext, serviceCollection) =>
+                {
+                    serviceCollection.AddTransient<ApplicationRoot>();
+                    serviceCollection.Configure<TestOptions>(hostBuilderContext.Configuration.GetSection("Test"));
+                })
                 .ConfigureContainer<ContainerBuilder>(autofacContainer =>
                 {
                     autofacContainer.RegisterType<TestService>().InstancePerLifetimeScope();
                 })
-                .ConfigureServices((hostBuilderContext, serviceCollection) =>
-                {
-                    serviceCollection.AddHostedService<ApplicationRoot>();
-                    serviceCollection.Configure<TestOptions>(hostBuilderContext.Configuration.GetSection("Test"));
-                }).Build();
+                .Build();
 
-            await host.StartAsync();
+            using (var scope = host.Services.CreateScope())
+            {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                
+                var appRoot = scope.ServiceProvider.GetRequiredService<ApplicationRoot>();
+                await appRoot.Run(args, cts.Token);
+            }
         }
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Konzolovka
 {
-    public class ApplicationRoot : IHostedService
+    public class ApplicationRoot
     {
         private readonly TestOptions options;
         private readonly TestService testService;
@@ -18,16 +18,9 @@ namespace Konzolovka
             this.options = options.Value;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task Run(string[] args, CancellationToken cancellationToken = new CancellationToken())
         {
-            Console.WriteLine("Author homepage " + options.Url);
             Console.WriteLine(testService.Test());
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
 }
